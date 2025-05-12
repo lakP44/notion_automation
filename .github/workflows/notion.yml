@@ -1,8 +1,6 @@
 name: Run Notion Automation Every Minute (Test)
 
 on:
-  schedule:
-    - cron: '* * * * *'     # 🔁 매 1분마다 실행 (테스트용)
   workflow_dispatch:        # 수동 실행도 가능
 
 jobs:
