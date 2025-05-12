@@ -1,8 +1,9 @@
 {
-    "name": "notion-automation",
-    "version": "1.0.0",
-    "dependencies": {
-      "@notionhq/client": "^2.2.1"
-    }
+  "name": "notion-test",
+  "version": "1.0.0",
+  "main": "add_notion_todo.js",
+  "dependencies": {
+    "@notionhq/client": "^2.2.1",
+    "dotenv": "^16.3.1"
   }
-  
+}
