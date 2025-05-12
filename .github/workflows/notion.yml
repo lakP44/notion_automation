@@ -25,4 +25,4 @@ jobs:
       run: node add_notion_todo.js
       env:
         NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-        NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+        NOTION_DB_ID: ${{ secrets.DB_NOTION_TOTAL_PLAN }}
