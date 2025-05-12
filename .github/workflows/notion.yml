@@ -1,28 +1,28 @@
-name: Add Notion Todo Daily
+name: Run Notion Automation Every Minute (Test)
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # UTC 기준 매일 오전 9시 (KST)
-  workflow_dispatch:
+    - cron: '* * * * *'     # 🔁 매 1분마다 실행 (테스트용)
+  workflow_dispatch:        # 수동 실행도 가능
 
 jobs:
-  notion-job:
+  run-main:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-    - name: Setup Node
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Run Notion Script
-      run: node add_notion_todo.js
-      env:
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-        NOTION_DB_ID: ${{ secrets.DB_NOTION_TOTAL_PLAN }}
+      - name: Run add_notion_todo.js
+        run: node add_notion_todo.js
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
