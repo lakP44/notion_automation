@@ -8,6 +8,8 @@ from notion_client import Client
 import os
 import pandas as pd
 
+TODAY_FOR_TEST = "2025-06-05"  # 테스트용 오늘 날짜 (실제 사용시 주석처리)
+
 ### .env 파일에서 환경변수 로드
 load_dotenv()
 
@@ -32,7 +34,7 @@ view_pages = view_response["results"]
 
 # 오늘 날짜와 이번 주 일요일 계산
 # TODAY = pd.Timestamp.today().normalize()
-TODAY = pd.to_datetime("2025-06-21").normalize() # 오늘날짜 변경 테스트
+TODAY = pd.to_datetime(TODAY_FOR_TEST).normalize() # 오늘날짜 변경 테스트
 # 일요일=0 ~ 토요일=6 기준으로 변환
 sunday_start_weekday = (TODAY.weekday() + 1) % 7
 
@@ -150,17 +152,6 @@ for page in view_pages:
     if include_start.date() <= start_time.date() <= week_end.date():
         total_view_db_result[unique_key] = all_view_db_result[unique_key]
 
-for k, v in total_view_db_result.items():
-    # 시작일이 오늘 날짜인 경우
-    if ((v["시작일"]) == TODAY.date().isoformat()):
-        # 오늘 날짜에 해당하는 모든 계획의 상태를 "진행 중"으로 변경
-        notion.pages.update(
-            page_id=v["id"],
-            properties={
-                "계획 상태": {"status": {"name": "진행 중"}}
-            }
-        )
-
 ############################################################################################################################################
 # Notion에서 생성된 계획을 기반으로 캘린더 데이터 생성
 for title, data in total_create_db_result.items():
@@ -177,7 +168,7 @@ for title, data in total_create_db_result.items():
         continue
     
     # 종료일이 오늘날짜보다 과거인 경우 건너뛰기
-    if ((data["종료됨"]) or (start_time > TODAY)):
+    if ((data["종료됨"]) or (data["일시중지"])):
         continue
     
     if repeat == "매일":
@@ -193,6 +184,12 @@ for title, data in total_create_db_result.items():
             # 해당 날짜에 이미 같은 제목이 있는 경우 생략
             if key in total_view_db_result:
                 continue
+            
+            # 오늘 날짜인 경우
+            if current_day.date() == TODAY.date():
+                plan_stat = "진행 중"
+            else:
+                plan_stat = "시작 전"
 
             # 페이지 생성
             notion.pages.create(
@@ -201,6 +198,7 @@ for title, data in total_create_db_result.items():
                     "계획명": {"title": [{"text": {"content": day_title}}]},
                     "시작일": {"date": {"start": current_day.date().isoformat()}},
                     "수행 시간": {"number": data["수행 시간"]},
+                    "계획 상태": {"status": {"name": plan_stat}},
                     "완료": {"checkbox": False}
                 }
             )
@@ -313,7 +311,10 @@ for title, data in total_create_db_result.items():
             key = f"{new_title}::{TODAY.date().isoformat()}"  # ← 수정됨: 중복 확인용 key 구성
 
             # 오늘 같은 제목 이미 있으면 생략
-            if key not in total_view_db_result:
+            # 날짜 기준으로 해당 제목의 오늘 회차가 존재하는지 확인
+            already_exists = any(k.startswith(title) for k in total_view_db_result if TODAY.date().isoformat() in k)
+
+            if not already_exists:
                 notion.pages.create(
                     parent={"database_id": NOTION_VIEW_PLAN_PAGE_ID},
                     properties={
@@ -341,6 +342,12 @@ for title, data in total_create_db_result.items():
                 # 중복 방지: 같은 제목+시작일 조합이 이미 있으면 스킵
                 if key in total_view_db_result:
                     continue
+                
+                # 오늘 날짜인 경우
+                if current_day.date() == TODAY.date():
+                    plan_stat = "진행 중"
+                else:
+                    plan_stat = "시작 전"
 
                 # 페이지 생성
                 notion.pages.create(
@@ -349,12 +356,33 @@ for title, data in total_create_db_result.items():
                         "계획명": {"title": [{"text": {"content": title}}]},
                         "시작일": {"date": {"start": current_day.date().isoformat()}},
                         "수행 시간": {"number": data["수행 시간"]},
-                        "완료": {"checkbox": False}
+                        "완료": {"checkbox": False},
+                        "계획 상태": {"status": {"name": plan_stat}}
                     }
                 )
 
-    elif (repeat == "없음"):
-        pass
+    elif repeat == "없음":
+        key = f"{title}::{data['시작일']}"  # ← 수정됨
+        if key in total_view_db_result:
+            continue
+
+        # 오늘 날짜인 경우
+        if data["시작일"] == TODAY.date().isoformat():
+            plan_stat = "진행 중"
+        else:
+            plan_stat = "시작 전"
+        
+        # 페이지 생성
+        notion.pages.create(
+            parent={"database_id": NOTION_VIEW_PLAN_PAGE_ID},
+            properties={
+                "계획명": {"title": [{"text": {"content": title}}]},
+                "시작일": {"date": {"start": data["시작일"]}},
+                "수행 시간": {"number": data["수행 시간"]},
+                "완료": {"checkbox": False},
+                "계획 상태": {"status": {"name": plan_stat}}
+            }
+        )
 
 # 이전 주 계획 상태 업데이트
 for k, v in total_view_db_result.items():
@@ -377,6 +405,43 @@ for k, v in total_view_db_result.items():
             page_id=v["id"],
             properties={
                 "계획 상태": {"status": {"name": "완료"}}
+            }
+        )
+
+# 오늘이 일요일인 경우 바로 전날의 계획 상태를 완료 됐으면 완료, 실패 됐으면 실패로 변경
+for k, v in all_view_db_result.items():
+    if TODAY.weekday() == 6:  # 오늘이 일요일인 경우
+        plan_date = pd.to_datetime(v["시작일"], errors="coerce").date()
+        is_completed = v.get("완료", False)
+
+        # 제목에 "(n회 남음)" 패턴이 포함되어 있으면 제외
+        if "(" in k and "회 남음" in k:
+            continue
+
+        if plan_date == TODAY.date() - pd.Timedelta(days=1):
+            if is_completed:
+                notion.pages.update(
+                    page_id=v["id"],
+                    properties={
+                        "계획 상태": {"status": {"name": "완료"}}
+                    }
+                )
+            else:
+                notion.pages.update(
+                    page_id=v["id"],
+                    properties={
+                        "계획 상태": {"status": {"name": "실패"}}
+                    }
+                )
+    
+for k, v in total_view_db_result.items():
+    # 시작일이 오늘 날짜인 경우
+    if ((v["시작일"]) == TODAY.date().isoformat()):
+        # 오늘 날짜에 해당하는 모든 계획의 상태를 "진행 중"으로 변경
+        notion.pages.update(
+            page_id=v["id"],
+            properties={
+                "계획 상태": {"status": {"name": "진행 중"}}
             }
         )
 
