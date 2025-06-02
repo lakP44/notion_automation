@@ -32,7 +32,7 @@ view_pages = view_response["results"]
 
 # 오늘 날짜와 이번 주 일요일 계산
 # TODAY = pd.Timestamp.today().normalize()
-TODAY = pd.to_datetime("2025-06-10").normalize()# 오늘날짜 변경 테스트
+TODAY = pd.to_datetime("2025-06-11").normalize()# 오늘날짜 변경 테스트
 # 일요일=0 ~ 토요일=6 기준으로 변환
 sunday_start_weekday = (TODAY.weekday() + 1) % 7
 
@@ -103,6 +103,14 @@ for page in create_pages:
     
 ############################################################################################################################################   
 # 전체 계획에서 각 페이지를 순회하며 속성 추출
+# 이번 주 범위 계산 (일요일 ~ 토요일)
+# 일요일이 0, 월요일이 1, ..., 토요일이 6 이 되도록 조정
+week_day = (TODAY.weekday() + 1) % 7  # ← 일요일이면 0, 월요일이면 1, ..., 토요일이면 6
+
+week_start = TODAY - pd.Timedelta(days=week_day)
+week_end = week_start + pd.Timedelta(days=6)
+
+# 주간 필터링된 페이지 저장용
 total_view_db_result = {}
 
 for page in view_pages:
@@ -114,27 +122,23 @@ for page in view_pages:
         continue
 
     plan_stat = extract_value(props["계획 상태"])["name"]
-    start_time = pd.to_datetime(start_day, errors='coerce')
+    start_time = pd.to_datetime(start_day, errors='coerce').normalize().tz_localize(None)
 
-    # 시작일 날짜만 추출 + tz 제거
-    start_time = start_time.normalize().tz_localize(None)
+    if week_start.date() <= start_time.date() <= week_end.date():
+        # key를 title 단독이 아니라 title + 날짜로 지정
+        unique_key = f"{title}::{start_time.date().isoformat()}"
 
-    # 오늘 ~ 일요일 범위 안에 포함되지 않으면 스킵
-    if not (TODAY <= start_time <= SATURDAY):
-        continue
+        total_view_db_result[unique_key] = {
+            "id": page["id"],
+            "계획 상태": plan_stat,
+            "시작일": start_time,
+            **{
+                k: extract_value(v)
+                for k, v in props.items()
+                if k not in ("계획명", "계획 상태")
+            }
+        }
 
-    # 기본 속성 추출
-    parsed_props = {}
-    for k, v in props.items():
-        if k in ("계획명", "계획 상태"):
-            continue
-        parsed_props[k] = extract_value(v)
-
-    total_view_db_result[title] = {
-        "id": page["id"],
-        "계획 상태": plan_stat,
-        **parsed_props
-    }
 
 ############################################################################################################################################
 # Notion에서 생성된 계획을 기반으로 캘린더 데이터 생성
@@ -156,15 +160,20 @@ for title, data in total_create_db_result.items():
         continue
     
     if repeat == "매일":
-        for i in range(7):
-            current_day = TODAY + pd.Timedelta(days=i)
-            day_title = title  # 제목이 날짜별로 고정이면 그대로 사용
+        # 이번 주 토요일까지 범위 계산
+        # week_start = TODAY - pd.Timedelta(days=TODAY.weekday() + 1)  # 이번 주 일요일
+        # week_end = week_start + pd.Timedelta(days=6)                 # 이번 주 토요일
 
-            # 페이지가 이미 존재하는 경우 스킵
-            if day_title in total_view_db_result and \
-            pd.to_datetime(total_view_db_result[day_title]["시작일"]).date() == current_day.date():
+        for i in range((week_end - TODAY).days + 1):  # 오늘 ~ 토요일까지 반복
+            current_day = TODAY + pd.Timedelta(days=i)
+            day_title = title
+            key = f"{day_title}::{current_day.date().isoformat()}"
+
+            # 해당 날짜에 이미 같은 제목이 있는 경우 생략
+            if key in total_view_db_result:
                 continue
 
+            # 페이지 생성
             notion.pages.create(
                 parent={"database_id": NOTION_VIEW_PLAN_PAGE_ID},
                 properties={
@@ -174,21 +183,113 @@ for title, data in total_create_db_result.items():
                     "완료": {"checkbox": False}
                 }
             )
-    elif (repeat == "매주 n회"):
-        pass
+
+    elif repeat == "매주 n회":
+        weekly_count = data["매주 몇 회"]  # 정확한 속성명 사용
+        # this_week_start = TODAY - pd.Timedelta(days=TODAY.weekday() + 1)  # 이번 주 일요일
+        # this_week_end = this_week_start + pd.Timedelta(days=6)            # 이번 주 토요일
+
+        # 이번 주 생성된 관련 페이지들 필터링
+        existing_weekly_pages = [
+            (k, v) for k, v in total_view_db_result.items()
+            if k.startswith(f"{title}") and  # ← 수정됨: 키 형식 반영
+            "시작일" in v and
+            week_start.date() <= pd.to_datetime(v["시작일"], errors="coerce").date() <= week_end.date()
+        ]
+
+        # 이번 주에 잠시 중지 상태가 있다면 아무 작업도 하지 않음
+        if any(v.get("계획 상태") == "잠시 중지" for _, v in existing_weekly_pages):
+            continue
+
+        # 완료된 횟수 체크박스로 계산
+        completed = sum(1 for _, v in existing_weekly_pages if v.get("완료") is True)
+
+        moved = False  # 계획이 이동됐는지 체크하는 플래그
+        # 일요일은 제외
+        if repeat == "매주 n회":
+            # 어제 계획 중 완료되지 않은 것 → 오늘로 이동 (단, 하루에 하나만)
+            for k, v in existing_weekly_pages:
+                if moved:
+                    break
+
+                plan_date = pd.to_datetime(v["시작일"], errors="coerce").date()
+                # 완료 체크박스가 없거나 False인 경우에만 이동
+                if plan_date == TODAY.date() - pd.Timedelta(days=1) and not v.get("완료", False) and TODAY.weekday() != 6:
+                    # 기존 계획 아카이브
+                    notion.pages.update(
+                        page_id=v["id"],
+                        archived=True
+                    )
+
+                    # 오늘로 이동
+                    original_title = k.split("::")[0]  # ← 수정됨: title 추출
+                    notion.pages.create(
+                        parent={"database_id": NOTION_VIEW_PLAN_PAGE_ID},
+                        properties={
+                            "계획명": {"title": [{"text": {"content": original_title}}]},
+                            "시작일": {"date": {"start": TODAY.date().isoformat()}},
+                            "계획 상태": {"status": {"name": "진행 중"}},
+                            "완료": {"checkbox": False}
+                        }
+                    )
+                    moved = True
+                    
+                elif plan_date == TODAY.date() - pd.Timedelta(days=1) and not v.get("완료", False) and TODAY.weekday() == 6:
+                    # 기존 페이지의 상태만 "실패"로 변경
+                    notion.pages.update(
+                        page_id=v["id"],
+                        properties={
+                            "계획 상태": {"status": {"name": "실패"}}
+                        }
+                    )
+
+                elif plan_date == TODAY.date() - pd.Timedelta(days=1) and v.get("완료", True):
+                    # 기존 페이지의 상태만 "완료"로 변경
+                    notion.pages.update(
+                        page_id=v["id"],
+                        properties={
+                            "계획 상태": {"status": {"name": "완료"}}
+                        }
+                    )
+
+        # 새 계획 생성이 필요한 경우
+        current_count = completed + (1 if moved else 0)
+        if current_count < weekly_count and not moved:
+            remaining = weekly_count - completed
+            if TODAY.weekday() == 6:
+                remaining = weekly_count
+            new_title = f"{title} ({remaining}회 남음)"
+            key = f"{new_title}::{TODAY.date().isoformat()}"  # ← 수정됨: 중복 확인용 key 구성
+
+            # 오늘 같은 제목 이미 있으면 생략
+            if key not in total_view_db_result:
+                notion.pages.create(
+                    parent={"database_id": NOTION_VIEW_PLAN_PAGE_ID},
+                    properties={
+                        "계획명": {"title": [{"text": {"content": new_title}}]},
+                        "시작일": {"date": {"start": TODAY.date().isoformat()}},
+                        "계획 상태": {"status": {"name": "진행 중"}},
+                        "완료": {"checkbox": False}
+                    }
+                )
+
     elif repeat == "특정 요일":
         weekday_names = ["월", "화", "수", "목", "금", "토", "일"]
 
-        for i in range(7):
+        # 이번 주 토요일 계산
+        # week_start = TODAY - pd.Timedelta(days=TODAY.weekday() + 1)  # 이번 주 일요일
+        # week_end = week_start + pd.Timedelta(days=6)                 # 이번 주 토요일
+
+        for i in range((week_end - TODAY).days + 1):  # 오늘 ~ 토요일까지 반복
             current_day = TODAY + pd.Timedelta(days=i)
-            weekday_kor = weekday_names[current_day.weekday()]  # 현재 요일 한글
+            weekday_kor = weekday_names[current_day.weekday()]  # 현재 요일 (한글)
 
             if weekday_kor in data["요일 선택"]:
-                # 중복 방지: 같은 제목의 페이지가 이미 current_day에 있으면 건너뜀
-                if title in total_view_db_result:
-                    existing_start = pd.to_datetime(total_view_db_result[title]["시작일"], errors="coerce")
-                    if existing_start is not pd.NaT and existing_start.date() == current_day.date():
-                        continue  # 같은 날짜의 동일 제목 페이지가 이미 존재
+                key = f"{title}::{current_day.date().isoformat()}"  # ← 수정됨
+
+                # 중복 방지: 같은 제목+시작일 조합이 이미 있으면 스킵
+                if key in total_view_db_result:
+                    continue
 
                 # 페이지 생성
                 notion.pages.create(
@@ -200,7 +301,10 @@ for title, data in total_create_db_result.items():
                         "완료": {"checkbox": False}
                     }
                 )
+
     elif (repeat == "없음"):
         pass
+    
+
     
 k = 1
