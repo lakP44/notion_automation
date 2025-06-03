@@ -6,11 +6,8 @@
 from dotenv import load_dotenv
 from notion_client import Client
 import os
-import pandas as pd
 
 from utils.env_loader import load_env_variables
-from utils.extractor import extract_value
-from utils.constants import TODAY, week_start, week_end, SATURDAY
 from handlers.create_plan_handler import fetch_create_plan_data
 from handlers.view_plan_handler import fetch_view_plan_data
 from handlers.plan_generator import generate_calendar_plans
