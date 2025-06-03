@@ -8,7 +8,7 @@ from notion_client import Client
 import os
 import pandas as pd
 
-TODAY_FOR_TEST = "2025-06-05"  # 테스트용 오늘 날짜 (실제 사용시 주석처리)
+TODAY_FOR_TEST = "2025-06-10"  # 테스트용 오늘 날짜 (실제 사용시 주석처리)
 
 ### .env 파일에서 환경변수 로드
 load_dotenv()
@@ -362,6 +362,13 @@ for title, data in total_create_db_result.items():
                 )
 
     elif repeat == "없음":
+        
+        notion.pages.update(
+            page_id=data["id"],
+            properties={"종료일": {"date": {"start": start_time.date().isoformat()}}}
+        )
+        end_time = start_time  # 이후 로직을 위해 로컬 변수도 업데이트
+        
         key = f"{title}::{data['시작일']}"  # ← 수정됨
         if key in total_view_db_result:
             continue
@@ -387,20 +394,21 @@ for title, data in total_create_db_result.items():
 # 이전 주 계획 상태 업데이트
 for k, v in total_view_db_result.items():
     plan_date = pd.to_datetime(v["시작일"], errors="coerce").date()
+    plan_stat = v["계획 상태"]
     is_completed = v.get("완료", False)
 
     # 제목에 "(n회 남음)" 패턴이 포함되어 있으면 제외
     if "(" in k and "회 남음" in k:
         continue
 
-    if plan_date < TODAY.date() and not is_completed:
+    if plan_date < TODAY.date() and not is_completed and plan_stat != "잠시 중지":
         notion.pages.update(
             page_id=v["id"],
             properties={
                 "계획 상태": {"status": {"name": "실패"}}
             }
         )
-    elif plan_date < TODAY.date() and is_completed:
+    elif plan_date < TODAY.date() and is_completed and plan_stat != "잠시 중지":
         notion.pages.update(
             page_id=v["id"],
             properties={
@@ -418,7 +426,7 @@ for k, v in all_view_db_result.items():
         if "(" in k and "회 남음" in k:
             continue
 
-        if plan_date == TODAY.date() - pd.Timedelta(days=1):
+        if plan_date == TODAY.date() - pd.Timedelta(days=1) and plan_stat != "잠시 중지":
             if is_completed:
                 notion.pages.update(
                     page_id=v["id"],
