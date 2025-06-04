@@ -8,6 +8,8 @@ from notion_client import Client
 import os
 
 from utils.env_loader import load_env_variables
+from utils.logger import write_log
+
 from handlers.create_plan_handler import fetch_create_plan_data
 from handlers.view_plan_handler import fetch_view_plan_data
 from handlers.plan_generator import generate_calendar_plans
@@ -18,6 +20,8 @@ load_env_variables()
 
 # Notion API 클라이언트 초기화
 notion = Client(auth=os.environ["NOTION_TOKEN"])
+
+write_log("logs", os.environ["NOTION_CREATE_PLAN_PAGE_ID"])
 
 # Notion에서 페이지 정보 조회
 create_pages = notion.databases.query(database_id=os.environ["NOTION_CREATE_PLAN_PAGE_ID"])["results"]

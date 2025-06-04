@@ -5,6 +5,9 @@ on:
     - cron: "20 15 * * *" # KST 00:05 (UTC 15:20)
   workflow_dispatch: # 수동 실행도 가능
 
+permissions:
+  contents: write   # ← 이 줄 추가!
+
 jobs:
   run-main:
     runs-on: ubuntu-latest
@@ -13,21 +16,40 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Python 환경을 설정
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
+      # requirements.txt 파일을 사용하여 의존성 설치
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run main.py
-        run: python main.py
+      # 로그 폴더를 생성하고 env 변수를 사용하여 main.py 실행
+      - name: Save logs to file
+        run: |
+          mkdir -p logs
+          python main.py
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_CREATE_PLAN_DB_ID: ${{ secrets.NOTION_CREATE_PLAN_DB_ID }}
           NOTION_CREATE_PLAN_PAGE_ID: ${{ secrets.NOTION_CREATE_PLAN_PAGE_ID }}
           NOTION_VIEW_PLAN_DB_ID: ${{ secrets.NOTION_VIEW_PLAN_DB_ID }}
           NOTION_VIEW_PLAN_PAGE_ID: ${{ secrets.NOTION_VIEW_PLAN_PAGE_ID }}
+
+      # 로그 파일을 GitHub에 커밋하고 푸시
+      - name: Commit and push logs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add logs/
+          git commit -m "Add daily log ($(date +"%Y-%m-%d"))" || echo "No changes to commit"
+          git push
+
+      # 일주일이 지난 로그 파일 삭제
+      - name: Clean old logs
+        run: |
+          find logs/ -type f -name "*.log" -mtime +7 -delete
