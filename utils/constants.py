@@ -1,11 +1,14 @@
 import pandas as pd
+import pytz
+
+KST = pytz.timezone("Asia/Seoul")
 
 # 테스트용 오늘 날짜 설정
 # TODAY_FOR_TEST = "2025-06-09"
-# TODAY = pd.to_datetime(TODAY_FOR_TEST).normalize()
+# TODAY = pd.to_datetime(TODAY_FOR_TEST).tz_localize(KST).normalize()
 
 # 실제 오늘 날짜 사용
-TODAY = pd.Timestamp.today().normalize()
+TODAY = pd.Timestamp.now(tz=KST).normalize()
 
 # 이번 주 일요일 계산
 sunday_start_weekday = (TODAY.weekday() + 1) % 7
