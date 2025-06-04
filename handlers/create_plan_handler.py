@@ -1,4 +1,5 @@
 import pandas as pd
+
 from utils.extractor import extract_value
 from utils.constants import TODAY
 
@@ -24,7 +25,7 @@ def fetch_create_plan_data(notion, create_pages):
             parsed_props[k] = extract_value(v)
 
         # 종료일 없을 경우 설정
-        if ("종료일" not in props) or (not extract_value(props["종료일"])):
+        if ("종료일" not in props) or (not end_time):
             if repeat_prop == "없음":
                 notion.pages.update(
                     page_id=page["id"],

@@ -1,6 +1,8 @@
 import pandas as pd
 import os
+
 from utils.constants import TODAY, week_start, week_end
+from utils.logger import write_log  # 로그 작성을 위한 유틸리티 함수
 
 # "매주 n회" 반복 유형 처리 함수
 def handle_weekly_repeat(notion, title, data, total_view_db_result, all_view_db_result):
@@ -22,6 +24,7 @@ def handle_weekly_repeat(notion, title, data, total_view_db_result, all_view_db_
         ]
 
     if any(v.get("계획 상태") == "잠시 중지" for _, v in existing_weekly_pages):
+        write_log("logs", f"계획 '{title}'은 현재 '잠시 중지' 상태입니다. 이번주는 건너뜁니다.")
         return
 
     completed = sum(1 for _, v in existing_weekly_pages if v.get("완료") is True)
@@ -38,22 +41,26 @@ def handle_weekly_repeat(notion, title, data, total_view_db_result, all_view_db_
                 properties={"시작일": {"date": {"start": TODAY.date().isoformat()}}}
             )
             moved = True
+            write_log("logs", f"일요일이 아닌 때에 완료되지 않은 계획 '{k}'의 시작일을 {TODAY.date()}로 이동했습니다.")
         elif plan_date == TODAY.date() - pd.Timedelta(days=1) and not v.get("완료", False) and TODAY.weekday() == 6:
             notion.pages.update(
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": "실패"}}}
             )
+            write_log("logs", f"일요일에 완료되지 않은 계획 '{k}'이 실패 상태로 업데이트되었습니다.")
         elif plan_date == TODAY.date() - pd.Timedelta(days=1) and v.get("완료", True) and TODAY.weekday() == 6:
             status = "완료" if "(1회 남음)" in k else "실패"
             notion.pages.update(
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": status}}}
             )
+            write_log("logs", f"일요일에 완료된 계획 '{k}'이 {status} 상태로 업데이트되었습니다.")
         elif plan_date == TODAY.date() - pd.Timedelta(days=1) and v.get("완료", True):
             notion.pages.update(
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": "완료"}}}
             )
+            write_log("logs", f"일요일이 아닌 때에 완료된 계획 '{k}'이 완료 상태로 업데이트되었습니다.")
 
     current_count = completed + (1 if moved else 0)
     if current_count < weekly_count and not moved:
@@ -61,7 +68,7 @@ def handle_weekly_repeat(notion, title, data, total_view_db_result, all_view_db_
         if TODAY.weekday() == 6:
             remaining = weekly_count
         new_title = f"{title} ({remaining}회 남음)"
-        key = f"{new_title}::{TODAY.date().isoformat()}"
+        # key = f"{new_title}::{TODAY.date().isoformat()}"
         already_exists = any(k.startswith(title) for k in total_view_db_result if TODAY.date().isoformat() in k)
 
         if not already_exists:
@@ -74,3 +81,4 @@ def handle_weekly_repeat(notion, title, data, total_view_db_result, all_view_db_
                     "완료": {"checkbox": False}
                 }
             )
+            write_log("logs", f"계획 '{new_title}'이 {TODAY.date()}에 생성되었습니다.")

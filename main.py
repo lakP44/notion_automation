@@ -8,7 +8,7 @@ from notion_client import Client
 import os
 
 from utils.env_loader import load_env_variables
-from utils.logger import write_log
+from utils.logger import write_log # 로그 작성을 위한 유틸리티 함수
 
 from handlers.create_plan_handler import fetch_create_plan_data
 from handlers.view_plan_handler import fetch_view_plan_data
@@ -21,17 +21,21 @@ load_env_variables()
 # Notion API 클라이언트 초기화
 notion = Client(auth=os.environ["NOTION_TOKEN"])
 
-write_log("logs", os.environ["NOTION_CREATE_PLAN_PAGE_ID"])
-
 # Notion에서 페이지 정보 조회
 create_pages = notion.databases.query(database_id=os.environ["NOTION_CREATE_PLAN_PAGE_ID"])["results"]
+# write_log("logs", f"계획 생성표 추출 (생성하는 표): {create_pages}") # 페이지가 정상 추출됐는지 확인
+
 view_pages = notion.databases.query(database_id=os.environ["NOTION_VIEW_PLAN_PAGE_ID"])["results"]
+# write_log("logs", f"전체 계획표 추출 (생성되는 대상): {view_pages}") # 페이지가 정상 추출됐는지 확인
 
 # 계획 생성표 데이터 추출
 total_create_db_result = fetch_create_plan_data(notion, create_pages)
+write_log("logs", f"가공된 계획 생성표 데이터 (종료일 설정 등등...): {total_create_db_result}")
 
 # 전체 계획 및 주간 계획 데이터 추출
 all_view_db_result, total_view_db_result = fetch_view_plan_data(view_pages)
+write_log("logs", f"가공된 전체 계획표 데이터: {all_view_db_result}")
+write_log("logs", f"가공된 주간 계획표 데이터: {total_view_db_result}")
 
 # 캘린더 계획 생성 및 상태 업데이트 실행
 generate_calendar_plans(notion, total_create_db_result, total_view_db_result, all_view_db_result)

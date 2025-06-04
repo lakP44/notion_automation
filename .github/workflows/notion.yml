@@ -31,7 +31,6 @@ jobs:
       # 로그 폴더를 생성하고 env 변수를 사용하여 main.py 실행
       - name: Save logs to file
         run: |
-          mkdir -p logs
           python main.py
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
