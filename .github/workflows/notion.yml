@@ -2,8 +2,8 @@ name: Run Notion Automation Daily at 00:05 KST
 
 on:
   schedule:
-    # - cron: "20 15 * * *" # KST 00:05 (UTC 15:20)
-    - cron: '*/5 * * * *'  # 매 5분마다 실행, 최소 주기는 5분
+    - cron: "20 15 * * *" # KST 00:05 (UTC 15:20)
+    # - cron: '*/5 * * * *'  # 매 5분마다 실행, 최소 주기는 5분, 테스트용
   workflow_dispatch: # 수동 실행도 가능
 
 permissions:
