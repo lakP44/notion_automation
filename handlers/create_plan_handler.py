@@ -1,4 +1,5 @@
 import pandas as pd
+import time
 
 from utils.extractor import extract_value
 from utils.constants import TODAY
@@ -46,5 +47,7 @@ def fetch_create_plan_data(notion, create_pages):
             "id": page["id"],
             **parsed_props
         }
+        
+        time.sleep(0.5)  # API 호출 간의 지연을 추가하여 요청 속도 제한을 피함
 
     return total_create_db_result

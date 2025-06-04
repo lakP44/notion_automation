@@ -1,4 +1,6 @@
 import pandas as pd
+import time
+
 from utils.extractor import extract_value
 from utils.constants import TODAY, week_start, week_end
 
@@ -35,5 +37,7 @@ def fetch_view_plan_data(view_pages):
         include_start = week_start - pd.Timedelta(days=1) if repeat_type == "매주 n회" else week_start
         if include_start.date() <= start_time.date() <= week_end.date():
             total_view_db_result[unique_key] = all_view_db_result[unique_key]
+
+    time.sleep(0.5)  # API 호출 간의 지연을 추가하여 요청 속도 제한을 피함
 
     return all_view_db_result, total_view_db_result
