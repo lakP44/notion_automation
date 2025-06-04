@@ -52,6 +52,9 @@ def fetch_create_plan_data(notion, create_pages):
                 page_id=page["id"],
                 properties={"종료됨": {"checkbox": True}}
             )
+            parsed_props["종료됨"] = True  # ← 추가됨
+        else:
+            parsed_props["종료됨"] = False  # ← 추가됨: 종료 안 된 경우도 명시적으로 처리
 
         total_create_db_result[title] = {
             "id": page["id"],

@@ -26,6 +26,9 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
         "시작일" in v and
         week_start.date() <= pd.to_datetime(v["시작일"], errors="coerce").date() <= week_end.date()
     ]
+    
+    if ("가슴, 삼두 운동" in title):
+        pass
 
     if TODAY.weekday() == 6:
         existing_weekly_pages += [
@@ -48,19 +51,23 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
             break
 
         plan_date = pd.to_datetime(v["시작일"], errors="coerce").date()
-        if plan_date == TODAY.date() - pd.Timedelta(days=1) and not v.get("완료", False) and TODAY.weekday() != 6:
-            notion.pages.update(
-                page_id=v["id"],
-                properties={"시작일": {"date": {"start": TODAY.date().isoformat()}}}
-            )
-            moved = True
-            write_log("logs", f"일요일이 아닌 때에 완료되지 않은 계획 '{k}'의 시작일을 {TODAY.date()}로 이동했습니다.")
-        elif plan_date == TODAY.date() - pd.Timedelta(days=1) and not v.get("완료", False) and TODAY.weekday() == 6:
-            notion.pages.update(
-                page_id=v["id"],
-                properties={"계획 상태": {"status": {"name": "실패"}}}
-            )
-            write_log("logs", f"일요일에 완료되지 않은 계획 '{k}'이 실패 상태로 업데이트되었습니다.")
+        # 시작일이 어제이고 완료되지 않은 경우
+        if plan_date == TODAY.date() - pd.Timedelta(days=1) and not v.get("완료", False):
+            # 일요일이 아니고 종료되지 않은 계획인 경우
+            if (TODAY.weekday() != 6) and (not data["종료됨"]):
+                notion.pages.update(
+                    page_id=v["id"],
+                    properties={"시작일": {"date": {"start": TODAY.date().isoformat()}}}
+                )
+                moved = True
+                write_log("logs", f"일요일이 아닌 때에 완료되지 않은 계획 '{k}'의 시작일을 {TODAY.date()}로 이동했습니다.")
+            # 오늘이 일요일이거나 이미 종료된 계획인 경우
+            elif (TODAY.weekday() == 6) or data["종료됨"]:
+                notion.pages.update(
+                    page_id=v["id"],
+                    properties={"계획 상태": {"status": {"name": "실패"}}}
+                )
+                write_log("logs", f"일요일에 완료되지 않은 계획 '{k}'이 실패 상태로 업데이트되었습니다.")
         elif plan_date == TODAY.date() - pd.Timedelta(days=1) and v.get("완료", True) and TODAY.weekday() == 6:
             status = "완료" if "(1회 남음)" in k else "실패"
             notion.pages.update(
@@ -84,7 +91,7 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
         # key = f"{new_title}::{TODAY.date().isoformat()}"
         already_exists = any(k.startswith(title) for k in week_view_db_result if TODAY.date().isoformat() in k)
 
-        if not already_exists:
+        if not already_exists and not data["종료됨"]:
             notion.pages.create(
                 parent={"database_id": os.environ["NOTION_VIEW_PLAN_PAGE_ID"]},
                 properties={

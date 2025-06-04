@@ -28,8 +28,9 @@ def generate_calendar_plans(notion, total_create_db_result, week_view_db_result,
         repeat = data["반복 유형"]
         
         if data["종료됨"] or data["일시중지"]:
-            write_log("logs", f"계획 '{title}'은 종료되었거나 일시중지 상태입니다. 건너뜁니다.")
-            continue
+            if data["반복 유형"] != "매주 n회":
+                write_log("logs", f"계획 '{title}'은 종료되었거나 일시중지 상태입니다. 건너뜁니다.")
+                continue
 
         if repeat == "매일":
             handle_daily_repeat(notion, title, data, week_view_db_result)

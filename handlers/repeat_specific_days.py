@@ -19,9 +19,14 @@ def handle_specific_day_repeat(notion, title, data, week_view_db_result):
         이 함수는 반환값이 없습니다. Notion에 계획을 생성합니다.
     '''
     weekday_names = ["월", "화", "수", "목", "금", "토", "일"]
+    
+    end_date = pd.to_datetime(data["종료일"], errors="coerce").normalize().tz_localize(None)  # ← 추가됨
 
     for i in range((week_end - TODAY).days + 1):
         current_day = TODAY + pd.Timedelta(days=i)
+        if current_day > end_date:  # 종료일 이후는 생략
+            continue
+        
         weekday_kor = weekday_names[current_day.weekday()]
 
         if weekday_kor in data["요일 선택"]:

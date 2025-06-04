@@ -1,7 +1,7 @@
 import pandas as pd
 
 # 테스트용 오늘 날짜 설정
-# TODAY_FOR_TEST = "2025-06-08"
+# TODAY_FOR_TEST = "2025-06-09"
 # TODAY = pd.to_datetime(TODAY_FOR_TEST).normalize()
 
 # 실제 오늘 날짜 사용
