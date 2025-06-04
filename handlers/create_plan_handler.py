@@ -2,7 +2,7 @@ import pandas as pd
 import time
 
 from utils.extractor import extract_value
-from utils.constants import TODAY
+from utils.constants import TODAY, KST
 
 # 생성 계획 데이터를 구조화하여 반환하는 함수
 def fetch_create_plan_data(notion, create_pages):
@@ -46,8 +46,16 @@ def fetch_create_plan_data(notion, create_pages):
             else:
                 parsed_props["종료일"] = "2200-12-31"
                 
+        # 시간대를 KST로 변환
+        parsed_end = pd.to_datetime(parsed_props["종료일"], errors="coerce").normalize()
+        
+        if parsed_end.tzinfo is None:
+            parsed_end = parsed_end.tz_localize(KST)
+        else:
+            parsed_end = parsed_end.tz_convert(KST)
+                
         # 종료일이 오늘보다 이전이면 종료 상태로 변경
-        if pd.to_datetime(parsed_props["종료일"], errors="coerce").date() < TODAY.date():
+        if parsed_end.date() < TODAY.date():
             notion.pages.update(
                 page_id=page["id"],
                 properties={"종료됨": {"checkbox": True}}

@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-from utils.constants import TODAY, week_end
+from utils.constants import TODAY, week_end, KST
 from utils.logger import write_log # 로그 작성을 위한 유틸리티 함수
 
 # "매일" 반복 유형 처리 함수
@@ -18,15 +18,22 @@ def handle_daily_repeat(notion, title, data, week_view_db_result):
     Returns:
         이 함수는 반환값이 없습니다. Notion에 계획을 생성합니다.
     '''
-    end_date = pd.to_datetime(data["종료일"], errors="coerce").normalize().tz_localize(None)  # ← 추가됨
+    # 종료일 KST로 명확히 설정
+    end_date = pd.to_datetime(data["종료일"], errors="coerce").normalize()
+    if end_date.tzinfo is None:
+        end_date = end_date.tz_localize(KST)
+    else:
+        end_date = end_date.tz_convert(KST)
     
     for i in range((week_end - TODAY).days + 1):
         current_day = TODAY + pd.Timedelta(days=i)
+        current_day_str = current_day.date().isoformat()
+        
         if current_day > end_date:  # 종료일 이후는 생략
             continue
         
         day_title = title
-        key = f"{day_title}::{current_day.date().isoformat()}"
+        key = f"{day_title}::{current_day_str}"
 
         if key in week_view_db_result:
             write_log("logs", f"계획 '{day_title}'은 이미 {current_day.date()}에 생성되어 있습니다. 건너뜁니다.")
@@ -38,7 +45,7 @@ def handle_daily_repeat(notion, title, data, week_view_db_result):
             parent={"database_id": os.environ["NOTION_VIEW_PLAN_PAGE_ID"]},
             properties={
                 "계획명": {"title": [{"text": {"content": day_title}}]},
-                "시작일": {"date": {"start": current_day.date().isoformat()}},
+                "시작일": {"date": {"start": current_day_str}},
                 "수행 시간": {"number": data["수행 시간"]},
                 "계획 상태": {"status": {"name": plan_stat}},
                 "완료": {"checkbox": False}

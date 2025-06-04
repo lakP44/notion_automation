@@ -1,6 +1,6 @@
 import pandas as pd
 
-from utils.constants import TODAY
+from utils.constants import TODAY, TODAY_STR
 from utils.logger import write_log  # 로그 작성을 위한 유틸리티 함수
 
 # 이전 주 계획 상태 업데이트
@@ -19,7 +19,7 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
     write_log("logs", f"-------------------- 이전 계획 상태 업데이트 시작 --------------------")
     
     for k, v in week_view_db_result.items():
-        plan_date = pd.to_datetime(v["시작일"], errors="coerce").date()
+        plan_date = v["시작일"].date()
         plan_stat = v["계획 상태"]
         is_completed = v.get("완료", False)
 
@@ -42,7 +42,7 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
 
     if TODAY.weekday() == 6:
         for k, v in all_view_db_result.items():
-            plan_date = pd.to_datetime(v["시작일"], errors="coerce").date()
+            plan_date = v["시작일"].date()
             is_completed = v.get("완료", False)
 
             if "(" in k and "회 남음" in k:
@@ -59,7 +59,7 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
 
     write_log("logs", f"-------------------- 오늘 계획 상태 업데이트 시작 --------------------")
     for k, v in week_view_db_result.items():
-        if v["시작일"] == TODAY.date().isoformat():
+        if v["시작일"] == TODAY_STR:
             notion.pages.update(
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": "진행 중"}}}

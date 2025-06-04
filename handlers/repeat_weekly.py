@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-from utils.constants import TODAY, week_start, week_end
+from utils.constants import TODAY, week_start, week_end, KST, TODAY_STR
 from utils.logger import write_log  # 로그 작성을 위한 유틸리티 함수
 
 # "매주 n회" 반복 유형 처리 함수
@@ -24,7 +24,7 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
         (k, v) for k, v in week_view_db_result.items()
         if k.startswith(f"{title}") and
         "시작일" in v and
-        week_start.date() <= pd.to_datetime(v["시작일"], errors="coerce").date() <= week_end.date()
+        week_start.date() <= v["시작일"].date() <= week_end.date()
     ]
     
     if ("가슴, 삼두 운동" in title):
@@ -35,8 +35,8 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
             (k, v) for k, v in all_view_db_result.items()
             if k.startswith(f"{title}") and
             "시작일" in v and
-            (week_start.date() <= pd.to_datetime(v["시작일"], errors="coerce").date() <= week_end.date() or 
-             pd.to_datetime(v["시작일"], errors="coerce").date() == week_start.date() - pd.Timedelta(days=1))
+            (week_start.date() <= v["시작일"].date() <= week_end.date() or 
+             v["시작일"].date() == week_start.date() - pd.Timedelta(days=1))
         ]
 
     if any(v.get("계획 상태") == "잠시 중지" for _, v in existing_weekly_pages):
@@ -50,14 +50,15 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
         if moved:
             break
 
-        plan_date = pd.to_datetime(v["시작일"], errors="coerce").date()
+        plan_date = v["시작일"].date()
+
         # 시작일이 어제이고 완료되지 않은 경우
         if plan_date == TODAY.date() - pd.Timedelta(days=1) and not v.get("완료", False):
             # 일요일이 아니고 종료되지 않은 계획인 경우
             if (TODAY.weekday() != 6) and (not data["종료됨"]):
                 notion.pages.update(
                     page_id=v["id"],
-                    properties={"시작일": {"date": {"start": TODAY.date().isoformat()}}}
+                    properties={"시작일": {"date": {"start": TODAY_STR}}}
                 )
                 moved = True
                 write_log("logs", f"일요일이 아닌 때에 완료되지 않은 계획 '{k}'의 시작일을 {TODAY.date()}로 이동했습니다.")
@@ -88,15 +89,16 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
         if TODAY.weekday() == 6:
             remaining = weekly_count
         new_title = f"{title} ({remaining}회 남음)"
-        # key = f"{new_title}::{TODAY.date().isoformat()}"
-        already_exists = any(k.startswith(title) for k in week_view_db_result if TODAY.date().isoformat() in k)
+        key = f"{new_title}::{TODAY_STR}"
+        # already_exists = any(k.startswith(title) for k in week_view_db_result if TODAY_STR in k)
+        already_exists = key in week_view_db_result
 
         if not already_exists and not data["종료됨"]:
             notion.pages.create(
                 parent={"database_id": os.environ["NOTION_VIEW_PLAN_PAGE_ID"]},
                 properties={
                     "계획명": {"title": [{"text": {"content": new_title}}]},
-                    "시작일": {"date": {"start": TODAY.date().isoformat()}},
+                    "시작일": {"date": {"start": TODAY_STR}},
                     "계획 상태": {"status": {"name": "진행 중"}},
                     "완료": {"checkbox": False}
                 }

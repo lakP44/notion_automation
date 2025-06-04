@@ -23,6 +23,8 @@ def generate_calendar_plans(notion, total_create_db_result, week_view_db_result,
     Returns:
         이 함수는 반환값이 없습니다. 각 계획에 대해 적절한 반복 유형을 처리하고, 상태를 업데이트합니다.
     '''
+    write_log("logs", "전체 생성 계획을 반복 유형에 따라 처리합니다.")
+    
     for title, data in total_create_db_result.items():
         
         repeat = data["반복 유형"]

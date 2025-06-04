@@ -10,6 +10,8 @@ KST = pytz.timezone("Asia/Seoul")
 # 실제 오늘 날짜 사용
 TODAY = pd.Timestamp.now(tz=KST).normalize()
 
+TODAY_STR = TODAY.date().isoformat()
+
 # 이번 주 일요일 계산
 sunday_start_weekday = (TODAY.weekday() + 1) % 7
 

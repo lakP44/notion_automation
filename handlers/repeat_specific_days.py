@@ -20,17 +20,19 @@ def handle_specific_day_repeat(notion, title, data, week_view_db_result):
     '''
     weekday_names = ["월", "화", "수", "목", "금", "토", "일"]
     
-    end_date = pd.to_datetime(data["종료일"], errors="coerce").normalize().tz_localize(None)  # ← 추가됨
+    end_date = data["종료일"].normalize()
 
     for i in range((week_end - TODAY).days + 1):
         current_day = TODAY + pd.Timedelta(days=i)
+        current_day_str = current_day.date().isoformat()
+        
         if current_day > end_date:  # 종료일 이후는 생략
             continue
         
         weekday_kor = weekday_names[current_day.weekday()]
 
         if weekday_kor in data["요일 선택"]:
-            key = f"{title}::{current_day.date().isoformat()}"
+            key = f"{title}::{current_day_str}"
             if key in week_view_db_result:
                 write_log("logs", f"계획 '{title}'은 이미 {current_day.date()}에 생성되어 있습니다. 건너뜁니다.")
                 continue
@@ -41,7 +43,7 @@ def handle_specific_day_repeat(notion, title, data, week_view_db_result):
                 parent={"database_id": os.environ["NOTION_VIEW_PLAN_PAGE_ID"]},
                 properties={
                     "계획명": {"title": [{"text": {"content": title}}]},
-                    "시작일": {"date": {"start": current_day.date().isoformat()}},
+                    "시작일": {"date": {"start": current_day_str}},
                     "수행 시간": {"number": data["수행 시간"]},
                     "완료": {"checkbox": False},
                     "계획 상태": {"status": {"name": plan_stat}}
