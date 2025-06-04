@@ -5,6 +5,8 @@ from utils.logger import write_log  # 로그 작성을 위한 유틸리티 함�
 
 # 이전 주 계획 상태 업데이트
 def update_old_plan_status(notion, total_view_db_result, all_view_db_result):
+    write_log("logs", f"-------------------- 이전 계획 상태 업데이트 시작 --------------------")
+    
     for k, v in total_view_db_result.items():
         plan_date = pd.to_datetime(v["시작일"], errors="coerce").date()
         plan_stat = v["계획 상태"]
