@@ -5,10 +5,23 @@ from utils.constants import TODAY, week_start, week_end
 from utils.logger import write_log  # 로그 작성을 위한 유틸리티 함수
 
 # "매주 n회" 반복 유형 처리 함수
-def handle_weekly_repeat(notion, title, data, total_view_db_result, all_view_db_result):
+def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_result):
+    '''
+    "매주 n회" 반복 유형을 처리하는 함수
+    
+    Args:
+        notion (Client): Notion API 클라이언트 인스턴스
+        title (str): 계획 제목
+        data (dict): 계획 데이터
+        week_view_db_result (dict): 주간 필터링된 전체 계획 데이터
+        all_view_db_result (dict): 전체 계획 데이터
+        
+    Returns:
+        이 함수는 반환값이 없습니다. Notion에 계획을 생성하거나 업데이트합니다.
+    '''
     weekly_count = data["매주 몇 회"]
     existing_weekly_pages = [
-        (k, v) for k, v in total_view_db_result.items()
+        (k, v) for k, v in week_view_db_result.items()
         if k.startswith(f"{title}") and
         "시작일" in v and
         week_start.date() <= pd.to_datetime(v["시작일"], errors="coerce").date() <= week_end.date()
@@ -69,7 +82,7 @@ def handle_weekly_repeat(notion, title, data, total_view_db_result, all_view_db_
             remaining = weekly_count
         new_title = f"{title} ({remaining}회 남음)"
         # key = f"{new_title}::{TODAY.date().isoformat()}"
-        already_exists = any(k.startswith(title) for k in total_view_db_result if TODAY.date().isoformat() in k)
+        already_exists = any(k.startswith(title) for k in week_view_db_result if TODAY.date().isoformat() in k)
 
         if not already_exists:
             notion.pages.create(

@@ -6,6 +6,16 @@ from utils.constants import TODAY
 
 # 생성 계획 데이터를 구조화하여 반환하는 함수
 def fetch_create_plan_data(notion, create_pages):
+    '''
+    생성 계획 데이터를 구조화하여 반환하는 함수
+    
+    Args:
+        notion (Client): Notion API 클라이언트 인스턴스
+        create_pages (list): 생성 계획 페이지 목록
+        
+    Returns:
+        dict: 계획 이름을 키로 하고, 각 계획의 속성을 값으로 하는 딕셔너리
+    '''
     total_create_db_result = {}
 
     for page in create_pages:

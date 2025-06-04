@@ -4,10 +4,21 @@ from utils.constants import TODAY
 from utils.logger import write_log  # 로그 작성을 위한 유틸리티 함수
 
 # 이전 주 계획 상태 업데이트
-def update_old_plan_status(notion, total_view_db_result, all_view_db_result):
+def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
+    '''
+    이전 주 계획의 상태를 업데이트하는 함수
+    
+    Args:
+        notion (Client): Notion API 클라이언트 인스턴스
+        week_view_db_result (dict): 주간 필터링된 전체 계획 데이터
+        all_view_db_result (dict): 전체 계획 데이터
+        
+    Returns:
+        이 함수는 반환값이 없습니다. Notion에 계획 상태를 업데이트합니다.
+    '''
     write_log("logs", f"-------------------- 이전 계획 상태 업데이트 시작 --------------------")
     
-    for k, v in total_view_db_result.items():
+    for k, v in week_view_db_result.items():
         plan_date = pd.to_datetime(v["시작일"], errors="coerce").date()
         plan_stat = v["계획 상태"]
         is_completed = v.get("완료", False)
@@ -46,7 +57,8 @@ def update_old_plan_status(notion, total_view_db_result, all_view_db_result):
                 )
                 write_log("logs", f"계획 '{k}'이 {new_stat} 상태로 업데이트되었습니다.")
 
-    for k, v in total_view_db_result.items():
+    write_log("logs", f"-------------------- 오늘 계획 상태 업데이트 시작 --------------------")
+    for k, v in week_view_db_result.items():
         if v["시작일"] == TODAY.date().isoformat():
             notion.pages.update(
                 page_id=v["id"],

@@ -1,8 +1,18 @@
 import os
 from datetime import datetime
-import pytz
+import pytz # 한국 시간대 처리를 위한 pytz 모듈
 
 def write_log(log_dir: str, message: str):
+    '''
+    로그 메시지를 지정된 디렉토리에 날짜별로 저장하는 함수
+    
+    Args:
+        log_dir: 로그 파일을 저장할 디렉토리 경로
+        message: 로그로 기록할 메시지
+        
+    Returns:
+        이 함수는 반환값이 없습니다. 로그 파일에 메시지를 기록합니다.
+    '''
     os.makedirs(log_dir, exist_ok=True)
     kst = pytz.timezone("Asia/Seoul")
     now = datetime.now(kst)

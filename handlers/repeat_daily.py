@@ -5,13 +5,25 @@ from utils.constants import TODAY, week_end
 from utils.logger import write_log # 로그 작성을 위한 유틸리티 함수
 
 # "매일" 반복 유형 처리 함수
-def handle_daily_repeat(notion, title, data, total_view_db_result):
+def handle_daily_repeat(notion, title, data, week_view_db_result):
+    '''
+    "매일" 반복 유형을 처리하는 함수
+    
+    Args:
+        notion (Client): Notion API 클라이언트 인스턴스
+        title (str): 계획 제목
+        data (dict): 계획 데이터
+        week_view_db_result (dict): 주간 계획 데이터
+
+    Returns:
+        이 함수는 반환값이 없습니다. Notion에 계획을 생성합니다.
+    '''
     for i in range((week_end - TODAY).days + 1):
         current_day = TODAY + pd.Timedelta(days=i)
         day_title = title
         key = f"{day_title}::{current_day.date().isoformat()}"
 
-        if key in total_view_db_result:
+        if key in week_view_db_result:
             write_log("logs", f"계획 '{day_title}'은 이미 {current_day.date()}에 생성되어 있습니다. 건너뜁니다.")
             continue
 

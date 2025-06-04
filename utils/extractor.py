@@ -1,5 +1,14 @@
 # Notion 속성 값 추출 함수
 def extract_value(prop):
+    '''
+    Notion 속성 값을 추출하는 함수
+    
+    Args:
+        prop: Notion 페이지의 속성 정보
+        
+    Returns:
+        속성 값. 타입에 따라 문자열, 리스트, 또는 None을 반환
+    '''
     if not prop:
         return None
     t = prop["type"]
