@@ -1,15 +1,18 @@
+import os
 import pandas as pd
 import pytz
 
 KST = pytz.timezone("Asia/Seoul")
 
-# 테스트용 오늘 날짜 설정
-# TODAY_FOR_TEST = "2025-06-09"
-# TODAY = pd.to_datetime(TODAY_FOR_TEST).tz_localize(KST).normalize()
+# 테스트 여부 판단
+TODAY_FOR_TEST = os.environ.get("TODAY_FOR_TEST")
+TEST = TODAY_FOR_TEST is not None
 
-# 실제 오늘 날짜 사용
-TODAY = pd.Timestamp.now(tz=KST).normalize()
-
+if TEST:
+    TODAY = pd.to_datetime(TODAY_FOR_TEST).tz_localize(KST).normalize()
+else:
+    TODAY = pd.Timestamp.now(tz=KST).normalize()
+    
 TODAY_STR = TODAY.date().isoformat()
 
 # 이번 주 일요일 계산

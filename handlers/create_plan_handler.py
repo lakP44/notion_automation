@@ -1,5 +1,5 @@
-import pandas as pd
 import time
+import datetime  # 상단에서 이미 되어 있다면 생략
 
 from utils.extractor import extract_value
 from utils.constants import TODAY, KST
@@ -47,15 +47,9 @@ def fetch_create_plan_data(notion, create_pages):
                 parsed_props["종료일"] = start_time
             else:
                 # 반복 계획의 경우 종료일을 2200-12-31로 설정 (무한 반복)
-                parsed_props["종료일"] = "2200-12-31"
+                parsed_props["종료일"] = datetime.datetime(2200, 12, 31, tzinfo=KST)  # ← 여기 수정
                 
-        # 시간대를 KST로 변환
         parsed_end = parsed_props["종료일"]
-        
-        if parsed_end.tzinfo is None:
-            parsed_end = parsed_end.tz_localize(KST)
-        else:
-            parsed_end = parsed_end.tz_convert(KST)
                 
         # 종료일이 오늘보다 이전이면 종료 상태로 변경
         if parsed_end.date() < TODAY.date():

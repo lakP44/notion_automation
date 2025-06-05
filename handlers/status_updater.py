@@ -42,14 +42,14 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
 
     if (TODAY.weekday() == 6):
         for k, v in all_view_db_result.items():
-            plan_date.date() = v["시작일"].date()
+            plan_date = v["시작일"].date()
             is_completed = v.get("완료", False)
 
             if "(" in k and "회 남음" in k:
                 write_log("logs", f"계획 '{k}'은 매주 n회 반복 계획으로 이곳에서 처리하지 않습니다.")
                 continue
 
-            if ((plan_date.date() == TODAY.date() - pd.Timedelta(days=1)) and (v["계획 상태"] != "잠시 중지")):
+            if ((plan_date == TODAY.date() - pd.Timedelta(days=1)) and (v["계획 상태"] != "잠시 중지")):
                 new_stat = "완료" if is_completed else "실패"
                 notion.pages.update(
                     page_id=v["id"],
