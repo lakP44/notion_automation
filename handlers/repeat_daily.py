@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-from utils.constants import TODAY, week_end, KST
+from utils.constants import GetToday, GetWeekRange
 from utils.logger import write_log # 로그 작성을 위한 유틸리티 함수
 
 # "매일" 반복 유형 처리 함수
@@ -18,6 +18,9 @@ def handle_daily_repeat(notion, title, data, week_view_db_result):
     Returns:
         이 함수는 반환값이 없습니다. Notion에 계획을 생성합니다.
     '''
+    TODAY = GetToday()  # 오늘 날짜 가져오기
+    week_start, week_end = GetWeekRange()
+
     # 종료일 KST로 명확히 설정
     end_date = data["종료일"]
     

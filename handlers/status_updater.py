@@ -1,6 +1,6 @@
 import pandas as pd
 
-from utils.constants import TODAY, TODAY_STR
+from utils.constants import GetToday, GetTodayStr
 from utils.logger import write_log  # 로그 작성을 위한 유틸리티 함수
 
 # 이전 주 계획 상태 업데이트
@@ -16,8 +16,11 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
     Returns:
         이 함수는 반환값이 없습니다. Notion에 계획 상태를 업데이트합니다.
     '''
+    TODAY = GetToday()
+    TODAY_STR = GetTodayStr()
+
     write_log("logs", f"-------------------- 이전 계획 상태 업데이트 시작 --------------------")
-    
+
     for k, v in week_view_db_result.items():
         plan_date = v["시작일"]
         plan_stat = v["계획 상태"]
@@ -59,7 +62,7 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
 
     write_log("logs", f"-------------------- 오늘 계획 상태 업데이트 시작 --------------------")
     for k, v in week_view_db_result.items():
-        if v["시작일"] == TODAY_STR:
+        if ((v["시작일"] == TODAY) and (v["계획 상태"] != "진행 중")):
             notion.pages.update(
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": "진행 중"}}}

@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-from utils.constants import TODAY, week_start, week_end, KST, TODAY_STR
+from utils.constants import GetToday, GetWeekRange, GetTodayStr
 from utils.logger import write_log  # 로그 작성을 위한 유틸리티 함수
 
 # "매주 n회" 반복 유형 처리 함수
@@ -19,6 +19,10 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
     Returns:
         이 함수는 반환값이 없습니다. Notion에 계획을 생성하거나 업데이트합니다.
     '''
+    TODAY = GetToday()  # 오늘 날짜 가져오기
+    TODAY_STR = GetTodayStr()  # 오늘 날짜 문자열 가져오기
+    week_start, week_end = GetWeekRange()  # 이번 주 시작일과 종료일 가져오기
+
     weekly_count = data["매주 몇 회"]
     existing_weekly_pages = [
         (k, v) for k, v in week_view_db_result.items()

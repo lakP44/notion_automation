@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-from utils.constants import TODAY, KST
+from utils.constants import GetToday, GetWeekRange
 from utils.logger import write_log  # 로그 작성을 위한 유틸리티 함수
 
 # "없음" 반복 유형 처리 함수
@@ -18,12 +18,16 @@ def handle_no_repeat(notion, title, data, week_view_db_result):
     Returns:
         이 함수는 반환값이 없습니다. Notion에 계획을 생성하거나 업데이트합니다.
     '''
+    TODAY = GetToday()  # 오늘 날짜 가져오기
+    week_start, week_end = GetWeekRange()  # 이번 주 시작일과 종료일 가져오기
+    
     # 시작일 KST 처리
     start_time = data["시작일"]
     start_time_str = start_time.date().isoformat()
 
     # 시작일이 오늘보다 이전이면 생성하지 않음
-    if start_time.date() < TODAY.date():
+    if (start_time.date() < TODAY.date()) or (week_start.date() > start_time.date()) or (start_time.date() > week_end.date()):
+        write_log("logs", f"계획 '{title}'은 이번 주에 해당하지 않거나 과거의 계획이므로 생성하지 않습니다.")
         return
 
     if start_time != data["종료일"]:

@@ -2,7 +2,7 @@ import time
 import datetime  # 상단에서 이미 되어 있다면 생략
 
 from utils.extractor import extract_value
-from utils.constants import TODAY, KST
+from utils.constants import GetToday, KST
 
 # 생성 계획 데이터를 구조화하여 반환하는 함수
 def fetch_create_plan_data(notion, create_pages):
@@ -16,6 +16,8 @@ def fetch_create_plan_data(notion, create_pages):
     Returns:
         dict: 계획 이름을 키로 하고, 각 계획의 속성을 값으로 하는 딕셔너리
     '''
+    TODAY = GetToday()  # 현재 날짜를 KST로 가져옴
+    
     total_create_db_result = {}
 
     for page in create_pages:

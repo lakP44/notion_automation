@@ -2,12 +2,15 @@ import pandas as pd
 import time
 
 from utils.extractor import extract_value
-from utils.constants import TODAY, week_start, week_end
+from utils.constants import GetWeekRange
 
 # 전체 보기용 계획 데이터 및 주간 필터된 데이터 반환 함수
 def fetch_view_plan_data(view_pages):
     all_view_db_result = {}
     total_view_db_result = {}
+    
+    # TODAY = GetToday()  # 현재 날짜를 KST로 가져옴
+    week_start, week_end = GetWeekRange()
 
     # 보여지는 페이지에서 각 계획의 속성을 추출하고 가공
     for page in view_pages:
