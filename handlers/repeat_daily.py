@@ -19,11 +19,7 @@ def handle_daily_repeat(notion, title, data, week_view_db_result):
         이 함수는 반환값이 없습니다. Notion에 계획을 생성합니다.
     '''
     # 종료일 KST로 명확히 설정
-    end_date = pd.to_datetime(data["종료일"], errors="coerce").normalize()
-    if end_date.tzinfo is None:
-        end_date = end_date.tz_localize(KST)
-    else:
-        end_date = end_date.tz_convert(KST)
+    end_date = data["종료일"]
     
     for i in range((week_end - TODAY).days + 1):
         current_day = TODAY + pd.Timedelta(days=i)

@@ -25,6 +25,7 @@ def fetch_create_plan_data(notion, create_pages):
         repeat_prop = extract_value(props["반복 유형"])
         end_time = extract_value(props["종료일"])
 
+        # 시작일이 없으면 건너뜀
         if not start_time:
             continue
 
@@ -42,12 +43,14 @@ def fetch_create_plan_data(notion, create_pages):
                     page_id=page["id"],
                     properties={"종료일": {"date": {"start": start_time}}}
                 )
+                # 일회성 계획의 경우 종료일을 시작일로 설정
                 parsed_props["종료일"] = start_time
             else:
+                # 반복 계획의 경우 종료일을 2200-12-31로 설정 (무한 반복)
                 parsed_props["종료일"] = "2200-12-31"
                 
         # 시간대를 KST로 변환
-        parsed_end = pd.to_datetime(parsed_props["종료일"], errors="coerce").normalize()
+        parsed_end = parsed_props["종료일"]
         
         if parsed_end.tzinfo is None:
             parsed_end = parsed_end.tz_localize(KST)

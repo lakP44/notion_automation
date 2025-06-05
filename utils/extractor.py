@@ -32,9 +32,10 @@ def extract_value(prop):
             return None
         dt = pd.to_datetime(date_str, errors='coerce')
         if dt.tzinfo is None:
-            return dt.tz_localize(KST)
+            dt = dt.tz_localize(KST)
         else:
-            return dt.tz_convert(KST)
+            dt = dt.tz_convert(KST)
+        return dt.normalize()
     elif t == "number":
         return prop[t]
     elif t == "checkbox":

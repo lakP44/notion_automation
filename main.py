@@ -40,7 +40,7 @@ write_log("logs", f"가공된 전체 계획표 데이터: {all_view_db_result}")
 write_log("logs", f"가공된 주간 계획표 데이터: {week_view_db_result}")
 
 write_log("logs", f"-------------------- 캘린더 계획 생성 및 업데이트 시작 --------------------")
+
 # 캘린더 계획 생성 및 상태 업데이트 실행
 generate_calendar_plans(notion, total_create_db_result, week_view_db_result, all_view_db_result)
-
 write_log("logs", f"-------------------- 코드 전체 사이클 순회 완료 --------------------")

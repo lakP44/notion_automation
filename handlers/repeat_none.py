@@ -19,12 +19,7 @@ def handle_no_repeat(notion, title, data, week_view_db_result):
         이 함수는 반환값이 없습니다. Notion에 계획을 생성하거나 업데이트합니다.
     '''
     # 시작일 KST 처리
-    start_time = pd.to_datetime(data["시작일"], errors='coerce').normalize()
-    if start_time.tzinfo is None:
-        start_time = start_time.tz_localize(KST)
-    else:
-        start_time = start_time.tz_convert(KST)
-        
+    start_time = data["시작일"]
     start_time_str = start_time.date().isoformat()
 
     # 시작일이 오늘보다 이전이면 생성하지 않음

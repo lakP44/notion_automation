@@ -20,7 +20,7 @@ def handle_specific_day_repeat(notion, title, data, week_view_db_result):
     '''
     weekday_names = ["월", "화", "수", "목", "금", "토", "일"]
     
-    end_date = data["종료일"].normalize()
+    end_date = data["종료일"]
 
     for i in range((week_end - TODAY).days + 1):
         current_day = TODAY + pd.Timedelta(days=i)

@@ -19,7 +19,7 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
     write_log("logs", f"-------------------- 이전 계획 상태 업데이트 시작 --------------------")
     
     for k, v in week_view_db_result.items():
-        plan_date = v["시작일"].date()
+        plan_date = v["시작일"]
         plan_stat = v["계획 상태"]
         is_completed = v.get("완료", False)
 
@@ -27,29 +27,29 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
             write_log("logs", f"계획 '{k}'은 매주 n회 반복 계획으로 이곳에서 처리하지 않습니다.")
             continue
 
-        if plan_date < TODAY.date() and not is_completed and plan_stat != "잠시 중지":
+        if ((plan_date.date() < TODAY.date()) and (not is_completed) and (plan_stat != "잠시 중지")):
             notion.pages.update(
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": "실패"}}}
             )
             write_log("logs", f"계획 '{k}'이 실패 상태로 업데이트되었습니다.")
-        elif plan_date < TODAY.date() and is_completed and plan_stat != "잠시 중지":
+        elif ((plan_date.date() < TODAY.date()) and is_completed and (plan_stat != "잠시 중지")):
             notion.pages.update(
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": "완료"}}}
             )
             write_log("logs", f"계획 '{k}'이 완료 상태로 업데이트되었습니다.")
 
-    if TODAY.weekday() == 6:
+    if (TODAY.weekday() == 6):
         for k, v in all_view_db_result.items():
-            plan_date = v["시작일"].date()
+            plan_date.date() = v["시작일"].date()
             is_completed = v.get("완료", False)
 
             if "(" in k and "회 남음" in k:
                 write_log("logs", f"계획 '{k}'은 매주 n회 반복 계획으로 이곳에서 처리하지 않습니다.")
                 continue
 
-            if plan_date == TODAY.date() - pd.Timedelta(days=1) and v["계획 상태"] != "잠시 중지":
+            if ((plan_date.date() == TODAY.date() - pd.Timedelta(days=1)) and (v["계획 상태"] != "잠시 중지")):
                 new_stat = "완료" if is_completed else "실패"
                 notion.pages.update(
                     page_id=v["id"],
