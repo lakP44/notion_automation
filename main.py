@@ -26,16 +26,16 @@ def Run():
     create_pages = notion.databases.query(database_id=os.environ["NOTION_CREATE_PLAN_PAGE_ID"])["results"]
     view_pages = notion.databases.query(database_id=os.environ["NOTION_VIEW_PLAN_PAGE_ID"])["results"]
 
-    write_log("logs", f"-------------------- 가공 데이터 추출 시작 --------------------")
+    # write_log("logs", f"-------------------- 가공 데이터 추출 시작 --------------------")
 
     # 계획 생성표 데이터 추출
     total_create_db_result = fetch_create_plan_data(notion, create_pages)
-    write_log("logs", f"가공된 계획 생성표 데이터 (종료일 설정 등등...): {total_create_db_result}")
+    # write_log("logs", f"가공된 계획 생성표 데이터 (종료일 설정 등등...): {total_create_db_result}")
 
     # 전체 계획 및 주간 계획 데이터 추출
     all_view_db_result, week_view_db_result = fetch_view_plan_data(view_pages)
-    write_log("logs", f"가공된 전체 계획표 데이터: {all_view_db_result}")
-    write_log("logs", f"가공된 주간 계획표 데이터: {week_view_db_result}")
+    # write_log("logs", f"가공된 전체 계획표 데이터: {all_view_db_result}")
+    # write_log("logs", f"가공된 주간 계획표 데이터: {week_view_db_result}")
 
     write_log("logs", f"-------------------- 캘린더 계획 생성 및 업데이트 시작 --------------------")
 
