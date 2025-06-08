@@ -24,24 +24,21 @@ def fetch_view_plan_data(view_pages):
             continue
 
         plan_stat = extract_value(props["계획 상태"])["name"]
-        repeat_type = extract_value(props.get("반복 유형", {}))
         unique_key = f"{title}::{start_day.date().isoformat()}"
 
         if last_start <= start_day <= week_end:
             all_view_db_result[unique_key] = {
                 "id": page["id"],
                 "계획 상태": plan_stat,
-                "반복 유형": repeat_type,
                 "시작일": start_day,
                 **{
                     k: extract_value(v)
                     for k, v in props.items()
-                    if k not in ("계획명", "계획 상태", "반복 유형")
+                    if k not in ("계획명", "계획 상태")
                 }
             }
 
-        include_start = week_start - pd.Timedelta(days=1) if repeat_type == "매주 n회" else week_start
-        if include_start.date() <= start_day.date() <= week_end.date():
+        if week_start.date() <= start_day.date() <= week_end.date():
             total_view_db_result[unique_key] = all_view_db_result[unique_key]
 
     time.sleep(0.5)  # API 호출 간의 지연을 추가하여 요청 속도 제한을 피함
