@@ -23,17 +23,16 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
     TODAY_STR = GetTodayStr()  # 오늘 날짜 문자열 가져오기
     week_start, week_end = GetWeekRange()  # 이번 주 시작일과 종료일 가져오기
 
-    weekly_count = data["매주 몇 회"]
+    weekly_count = data["매주 몇 회"] # 매주 몇 회 반복되는지 가져오기
+    # 해당 일자가 속한 주의 계획 페이지를 가져오기
     existing_weekly_pages = [
         (k, v) for k, v in week_view_db_result.items()
         if k.startswith(f"{title}") and
         "시작일" in v and
         week_start.date() <= v["시작일"].date() <= week_end.date()
     ]
-    
-    if ("가슴, 삼두 운동" in title):
-        pass
 
+    # 일요일에 시작일이 어제인 계획도 포함
     if TODAY.weekday() == 6:
         existing_weekly_pages += [
             (k, v) for k, v in all_view_db_result.items()
@@ -43,17 +42,16 @@ def handle_weekly_repeat(notion, title, data, week_view_db_result, all_view_db_r
              v["시작일"].date() == week_start.date() - pd.Timedelta(days=1))
         ]
 
+    # 계획 상태가 "잠시 중지"인 경우 건너뜀
     if any(v.get("계획 상태") == "잠시 중지" for _, v in existing_weekly_pages):
         write_log("logs", f"계획 '{title}'은 현재 '잠시 중지' 상태입니다. 이번주는 건너뜁니다.")
         return
 
+    # 이번주에 완료된 계획 수를 계산
     completed = sum(1 for _, v in existing_weekly_pages if v.get("완료") is True)
-    moved = False
+    moved = False # 시작일이 이동되었는지 여부를 추적하는 변수
 
     for k, v in existing_weekly_pages:
-        if moved:
-            break
-
         plan_date = v["시작일"].date()
 
         # 시작일이 어제이고 완료되지 않은 경우
