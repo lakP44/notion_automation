@@ -1,2 +1,4 @@
 .env
 notion_auto
+test
+*/__pycache__
