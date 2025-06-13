@@ -7,6 +7,7 @@ KST = pytz.timezone("Asia/Seoul")
 def GetToday():
     '''
     현재 날짜를 KST로 가져오고, 시간은 00:00:00으로 설정하여 반환합니다.
+    test_runner.py로 실행 시 사용자가 설정한 날짜가 오늘 날짜가 됩니다.
     '''
     testDate = os.environ.get("TODAY_FOR_TEST")
     if testDate:
@@ -16,7 +17,7 @@ def GetToday():
 
 def GetYesterday():
     '''
-    어제제 날짜를 KST로 가져오고, 시간은 00:00:00으로 설정하여 반환합니다.
+    어제 날짜를 KST로 가져오고, 시간은 00:00:00으로 설정하여 반환합니다.
     '''
     return GetToday() - pd.Timedelta(days=1)
 
