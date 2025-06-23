@@ -35,7 +35,7 @@ def handle_daily_repeat(notion, title, data, week_view_db_result):
         key = f"{day_title}::{current_day_str}"
 
         if key in week_view_db_result:
-            write_log("logs", f"계획 '{day_title}'은 이미 {current_day.date()}에 생성되어 있습니다. 건너뜁니다.")
+            # write_log("logs", f"계획 '{day_title}'은 이미 {current_day.date()}에 생성되어 있습니다. 건너뜁니다.")
             continue
 
         plan_stat = "진행 중" if current_day.date() == TODAY.date() else "시작 전"
@@ -50,4 +50,4 @@ def handle_daily_repeat(notion, title, data, week_view_db_result):
                 "완료": {"checkbox": False}
             }
         )
-        write_log("logs", f"계획 '{day_title}'이 {current_day.date()}에 생성되었습니다.")
+        # write_log("logs", f"계획 '{day_title}'이 {current_day.date()}에 생성되었습니다.")

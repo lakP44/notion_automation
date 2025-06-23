@@ -23,7 +23,8 @@ def generate_calendar_plans(notion, total_create_db_result, week_view_db_result,
     Returns:
         이 함수는 반환값이 없습니다. 각 계획에 대해 적절한 반복 유형을 처리하고, 상태를 업데이트합니다.
     '''
-    write_log("logs", "전체 생성 계획을 반복 유형에 따라 처리합니다.")
+    # write_log("logs", "전체 생성 계획을 반복 유형에 따라 처리합니다.")
+    write_log("logs", "계획이 표시되는 로그 저장 스킵")
     
     for title, data in total_create_db_result.items():
         
@@ -31,7 +32,7 @@ def generate_calendar_plans(notion, total_create_db_result, week_view_db_result,
         
         if data["종료됨"] or data["일시중지"]:
             if data["반복 유형"] != "매주 n회":
-                write_log("logs", f"계획 '{title}'은 종료되었거나 일시중지 상태입니다. 건너뜁니다.")
+                # write_log("logs", f"계획 '{title}'은 종료되었거나 일시중지 상태입니다. 건너뜁니다.")
                 continue
 
         if repeat == "매일":
