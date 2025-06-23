@@ -27,7 +27,7 @@ def handle_no_repeat(notion, title, data, week_view_db_result):
 
     # 시작일이 오늘보다 이전이면 생성하지 않음
     if (start_time.date() < TODAY.date()) or (week_start.date() > start_time.date()) or (start_time.date() > week_end.date()):
-        # write_log("logs", f"계획 '{title}'은 이번 주에 해당하지 않거나 과거의 계획이므로 생성하지 않습니다.")
+        write_log("logs", f"계획 '{title}'은 이번 주에 해당하지 않거나 과거의 계획이므로 생성하지 않습니다.", False)
         return
 
     if start_time != data["종료일"]:
@@ -38,7 +38,7 @@ def handle_no_repeat(notion, title, data, week_view_db_result):
 
     key = f"{title}::{start_time_str}"
     if key in week_view_db_result:
-        # write_log("logs", f"계획 '{title}'은 이미 {data['시작일']}에 생성되어 있습니다. 건너뜁니다.")
+        write_log("logs", f"계획 '{title}'은 이미 {data['시작일']}에 생성되어 있습니다. 건너뜁니다.", False)
         return
 
     plan_stat = "진행 중" if start_time.date() == TODAY.date() else "시작 전"
@@ -53,4 +53,4 @@ def handle_no_repeat(notion, title, data, week_view_db_result):
             "계획 상태": {"status": {"name": plan_stat}}
         }
     )
-    # write_log("logs", f"계획 '{title}'이 {start_time_str}에 생성되었습니다.")
+    write_log("logs", f"계획 '{title}'이 {start_time_str}에 생성되었습니다.", False)

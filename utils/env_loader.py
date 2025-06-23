@@ -22,6 +22,6 @@ def load_env_variables():
     ]
     for key in required_keys:
         if os.getenv(key) is None:
-            write_log("logs", f"환경변수 '{key}'가 설정되지 않았습니다.")
+            write_log("logs", f"환경변수 '{key}'가 설정되지 않았습니다.", False)
         else:
-            write_log("logs", f"환경변수 '{key}'가 정상적으로 로드되었습니다.")
+            write_log("logs", f"환경변수 '{key}'가 정상적으로 로드되었습니다.", False)

@@ -19,7 +19,7 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
     TODAY = GetToday()
     TODAY_STR = GetTodayStr()
 
-    # write_log("logs", f"-------------------- 이전 계획 상태 업데이트 시작 --------------------")
+    write_log("logs", f"-------------------- 이전 계획 상태 업데이트 시작 --------------------", False)
 
     for k, v in week_view_db_result.items():
         plan_date = v["시작일"]
@@ -27,7 +27,7 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
         is_completed = v.get("완료", False)
 
         if "(" in k and "회 남음" in k:
-            # write_log("logs", f"계획 '{k}'은 매주 n회 반복 계획으로 이곳에서 처리하지 않습니다.")
+            write_log("logs", f"계획 '{k}'은 매주 n회 반복 계획으로 이곳에서 처리하지 않습니다.", False)
             continue
 
         if ((plan_date.date() < TODAY.date()) and (not is_completed) and (plan_stat != "잠시 중지")):
@@ -35,13 +35,13 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": "실패"}}}
             )
-            # write_log("logs", f"계획 '{k}'이 실패 상태로 업데이트되었습니다.")
+            write_log("logs", f"계획 '{k}'이 실패 상태로 업데이트되었습니다.", False)
         elif ((plan_date.date() < TODAY.date()) and is_completed and (plan_stat != "잠시 중지")):
             notion.pages.update(
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": "완료"}}}
             )
-            # write_log("logs", f"계획 '{k}'이 완료 상태로 업데이트되었습니다.")
+            write_log("logs", f"계획 '{k}'이 완료 상태로 업데이트되었습니다.", False)
 
     if (TODAY.weekday() == 6):
         for k, v in all_view_db_result.items():
@@ -49,7 +49,7 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
             is_completed = v.get("완료", False)
 
             if "(" in k and "회 남음" in k:
-                # write_log("logs", f"계획 '{k}'은 매주 n회 반복 계획으로 이곳에서 처리하지 않습니다.")
+                write_log("logs", f"계획 '{k}'은 매주 n회 반복 계획으로 이곳에서 처리하지 않습니다.", False)
                 continue
 
             if ((plan_date == TODAY.date() - pd.Timedelta(days=1)) and (v["계획 상태"] != "잠시 중지")):
@@ -58,13 +58,13 @@ def update_old_plan_status(notion, week_view_db_result, all_view_db_result):
                     page_id=v["id"],
                     properties={"계획 상태": {"status": {"name": new_stat}}}
                 )
-                # write_log("logs", f"계획 '{k}'이 {new_stat} 상태로 업데이트되었습니다.")
+                write_log("logs", f"계획 '{k}'이 {new_stat} 상태로 업데이트되었습니다.", False)
 
-    # write_log("logs", f"-------------------- 오늘 계획 상태 업데이트 시작 --------------------")
+    write_log("logs", f"-------------------- 오늘 계획 상태 업데이트 시작 --------------------", False)
     for k, v in week_view_db_result.items():
         if ((v["시작일"] == TODAY) and (v["계획 상태"] != "진행 중")):
             notion.pages.update(
                 page_id=v["id"],
                 properties={"계획 상태": {"status": {"name": "진행 중"}}}
             )
-            # write_log("logs", f"계획 '{k}'이 진행 중 상태로 업데이트되었습니다.")
+            write_log("logs", f"계획 '{k}'이 진행 중 상태로 업데이트되었습니다.", False)
